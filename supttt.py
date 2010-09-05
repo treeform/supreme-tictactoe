@@ -12,16 +12,60 @@ class Board:
         self.player1id = id
         self.player2id = None
         self.move = 0
+        self.finished = None
+
+        self.player1time = None
+        self.player2time = None
         
-    def mark(self,x,y,mark):        
+    def mark(self,x,y,mark):  
+        if self.move == 0 and mark != "X": return
+        if self.move == 1 and mark != "O": return
+          
         self.grid[x][y] = mark
         for r in self.grid:
             print " ".join(r)
+            
         self.move = (self.move + 1) % 2
         
-    def finished():
-        return False
-
+        self.finished = self.check()
+        
+    def check(self):
+        for side in "X","O":
+            # horizontals
+            for x in range(3):
+                for y in range(3):
+                    if self.grid[x][y] != side:
+                        break
+                else:
+                    return side + " won!"
+            # verticals
+            for y in range(3):
+                for x in range(3):
+                    if self.grid[x][y] != side:
+                        break
+                else:
+                    return side + " won!"
+            # diagonal \
+            for x,y in zip(range(3),range(3)):
+                if self.grid[x][y] != side:
+                        break
+            else:
+                return side + " won!"
+            # diagonal /
+            for x,y in zip(range(3),reversed(range(3))):
+                if self.grid[x][y] != side:
+                        break
+            else:
+                return side + " won!"
+       
+        for x in range(3):
+            for y in range(3):  
+                 if self.grid[x][y] != " ":
+                        return None
+        return "draw!"
+        
+        
+                    
 BOARDS = {}
 
 class MainHandler(tornado.web.RequestHandler):
@@ -69,6 +113,9 @@ class StatusHandler(tornado.web.RequestHandler):
         board = BOARDS[id]
 
         json["grid"] = board.grid
+        json["finished"] = board.finished
+        
+        if board.finished: print board.finished
 
         if board.player2id:
             if board.move == 0 and board.player1id == id:
@@ -81,7 +128,7 @@ class StatusHandler(tornado.web.RequestHandler):
                 else:
                     json["message"] = "waiting for X to move!"
         else:        
-            json["message"] = "waiting for some one to connect... "+str(board.player2id)
+            json["message"] = "waiting for some one to connect... "
             
         self.write(json_encode(json))    
 

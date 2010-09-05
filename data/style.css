@@ -31,3 +31,13 @@ p {
     padding: .5em;
     margin: 0px;
 }
+
+#finished {
+    display: none;
+    color: white;
+    background: #811;
+    padding: .5em;
+    margin: 0px;
+    font-size: 2em;
+    height: 400px;
+}

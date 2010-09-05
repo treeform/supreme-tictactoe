@@ -16,6 +16,12 @@ function ping() {
     c=c+1;
     var t=setTimeout("ping()",1000);
     $.getJSON('status.json?id='+$("#id").val(), function(data) {
+    
+        if( data.finished ){
+            $('#finished').show();
+            $('#finished').html(data.finished);
+        }
+    
         $('#message').html(data.message);
         var x = 0;
         for(var ridx in data.grid){
@@ -33,6 +39,11 @@ function ping() {
 }
 
 $(document).ready(function(){
+
+    $("#finished").click(function(event){
+        $("#finished").hide();
+        $("#id").val(Math.random());
+    });
     $("td").click(function(event){
         $.getJSON('pick.json?xy='+this.id+'&id='+$("#id").val(), 
             function(data) {
@@ -47,7 +58,8 @@ $(document).ready(function(){
 
 <body>
     <h1>supreme tic tac toe</h1>
-    <input type="hid_den" id="id" value="{{id}}">
+    <input type="hidden" id="id" value="{{id}}">
+    <div id="finished"></div>
     <table>
         <tr><td id="00"></td><td id="01"></td><td id="02"></td></tr>
         <tr><td id="10"></td><td id="11"></td><td id="12"></td></tr>
