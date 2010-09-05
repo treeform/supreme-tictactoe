@@ -1,0 +1,31 @@
+body {
+     margin: 0px;
+     background: #FFF;
+}
+
+h1 {
+    color: white;
+    background: #811;
+    padding: .5em;
+    margin: 0px;
+}
+
+table {
+    width: 100%;
+    height: 400px;
+}
+
+td {
+    border: 1px solid #811;
+    background: white;
+    text-align: center;
+    vertical-align: center;
+    font-size: 3em;
+}
+
+p {
+    color: white;
+    background: #811;
+    padding: .5em;
+    margin: 0px;
+}
