@@ -71,7 +71,25 @@ $(document).ready(function(){
         }
     });
     ping();
+    $(window).resize(function() {
+        fixGrid()
+    });
+    fixGrid();
 });
+
+// this makes the board always square
+function fixGrid(){
+    ww = $(window).width();
+    wh = $(window).height() - 140;
+    if ( ww > wh ) {
+        size = wh/3;
+    } else {
+        size = ww/3;
+    }
+    $("td").width(size);
+    $("td").height(size);
+}
+
 </script>
     
 </head>

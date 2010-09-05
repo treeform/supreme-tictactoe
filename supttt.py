@@ -4,6 +4,7 @@ import tornado.web
 from tornado.escape import json_encode
 from jinja2 import Template
 import random
+import time
 
 # this is out in serverlet db                    
 # its ok to keep it here because we never store the boards
@@ -19,7 +20,13 @@ WINNING_ROWS = [
     # diagonal
     [(0,0),(1,1),(2,2)],[(0,2),(1,1),(2,0)]]     
 
-# laod the templates and file we will need
+
+def read(file):
+    """ get the whole file and cloes it"""
+    with open(file) as file:
+        return file.read()
+
+# laod the templates and file we will need        
 BOARD = Template(read('templates/board.html'))
 STYLE = read('data/style.css')
 
@@ -42,13 +49,18 @@ class Board:
         self.player1id = id
         self.player2id = None
         # if players stop responding the board is closed
-        self.player1time = None
+        self.player1time = time.time()
         self.player2time = None
+        self.ping_time = None
         
     def mark(self,x,y,mark):  
         """ 
             places a mark, if mark is invalid nothing happens 
         """
+        # update times
+        if mark == "X": self.player1time = time.time()
+        if mark == "O": self.player2time = time.time()
+
         # dont allow out of turn moves
         if self.move == 0 and mark != "X": return
         if self.move == 1 and mark != "O": return
@@ -59,6 +71,7 @@ class Board:
         # setup next move    
         self.move = (self.move + 1) % 2
         self.finished = self.check()
+        
 
     def check(self):
         """
@@ -82,16 +95,12 @@ class Board:
         # no empty space its a draw                        
         return "draw!"
 
-def read(file):
-    """ get the whole file and cloes it"""
-    with open(file) as file:
-        return file.read()
-
 class MainHandler(tornado.web.RequestHandler):
     """
         handles the loading of the main board
     """    
     def get(self):
+        BOARD = Template(read('templates/board.html'))
         self.write(BOARD.render(id=random.randint(0,100000)))
 
 class PickHandler(tornado.web.RequestHandler):
@@ -121,6 +130,14 @@ class StatusHandler(tornado.web.RequestHandler):
         get state of the board
     """
     def get(self):
+        
+        # clean up unused boards
+        for board in list(BOARDS.values()):
+            if time.time() - board.ping_time > 10:
+                if board.player1id in BOARDS: del BOARDS[board.player1id]
+                if board.player2id in BOARDS: del BOARDS[board.player2id]
+                print "cleard board", board.player1id
+                
         self.set_header("Content-Type", "text/json")
         
         json = {}
@@ -132,6 +149,8 @@ class StatusHandler(tornado.web.RequestHandler):
                 if not board.player2id:
                     BOARDS[id] = board
                     board.player2id = id
+                    board.player1time = time.time()
+                    board.player2time = time.time()
                     print "player",id,"joined",board.player1id
                     break
             else:
@@ -139,10 +158,9 @@ class StatusHandler(tornado.web.RequestHandler):
                 BOARDS[id] = Board(id)
                 print "created new board",id
 
-        # get information about our board                
+          
         board = BOARDS[id]
-        json["grid"] = board.grid
-        json["finished"] = board.finished
+        board.ping_time = time.time()
 
         # get baord messages
         if board.player2id:
@@ -155,9 +173,20 @@ class StatusHandler(tornado.web.RequestHandler):
                     json["message"] = "waiting for O to move!"
                 else:
                     json["message"] = "waiting for X to move!"
+                    
+            # check for time out
+            if time.time() - board.player1time > 10:
+                board.finished = "X player left!"
+
+            if time.time() - board.player2time > 10:
+                board.finished = "O player left!"
         else:        
             json["message"] = "waiting for some one to connect... "
-            
+
+        # get information about our board                         
+        json["grid"] = board.grid
+        json["finished"] = board.finished
+
         self.write(json_encode(json))    
 
 class StyleCSS(tornado.web.RequestHandler):
@@ -165,6 +194,7 @@ class StyleCSS(tornado.web.RequestHandler):
         gets hardwired css style
     """
     def get(self):
+        STYLE = read('data/style.css')
         self.set_header("Content-Type", "text/css")
         self.write(STYLE)
 
