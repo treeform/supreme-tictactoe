@@ -13,6 +13,7 @@ var c=0;
 var t;
 var finished = false;
 
+// finishes this game and starts next game
 function nextGame() {
     finished = false;
     $("#id").val(Math.random());
@@ -20,12 +21,14 @@ function nextGame() {
     $("td").html(" ");
 }
 
+// pings the server once a second about state 
 function ping() {
     c=c+1;
     var t=setTimeout("ping()",1000);
     getStatus();
 }
 
+// get status server call
 function getStatus(){    
     $.getJSON('status.json?id='+$("#id").val(), function(data) {
         if( data.finished ){
@@ -53,6 +56,7 @@ function getStatus(){
     });
 }
 
+// when document loads set everything up
 $(document).ready(function(){
     $("td").click(function(event){
         if(finished) {
@@ -60,6 +64,8 @@ $(document).ready(function(){
         } else {
             $.getJSON('pick.json?xy='+this.id+'&id='+$("#id").val(), 
                 function(data) {
+                    // as soon as pick signal returns
+                    // get status so that we see our move quicker
                     getStatus();
             });
         }
