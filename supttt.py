@@ -5,6 +5,15 @@ from tornado.escape import json_encode
 from jinja2 import Template
 import random
 
+
+WINNING_ROWS = [
+    # vertical
+    [(0,0),(0,1),(0,2)],[(1,0),(1,1),(1,2)],[(2,0),(2,1),(2,2)], 
+    # horizontal
+    [(0,0),(1,0),(2,0)],[(0,1),(1,1),(2,1)],[(0,2),(1,2),(2,2)], 
+    # diagonal
+    [(0,0),(1,1),(2,2)],[(0,2),(1,1),(2,0)]]     
+
 class Board:
     
     def __init__(self, id):
@@ -18,50 +27,37 @@ class Board:
         self.player2time = None
         
     def mark(self,x,y,mark):  
+        # dont allow out of turn moves
         if self.move == 0 and mark != "X": return
         if self.move == 1 and mark != "O": return
+        # dont allow players to overwrite moves        
+        if self.grid[x][y] != " ": return
           
         self.grid[x][y] = mark
+        # setup next move    
+        self.move = (self.move + 1) % 2
+        self.finished = self.check()
+        
         for r in self.grid:
             print " ".join(r)
-            
-        self.move = (self.move + 1) % 2
-        
-        self.finished = self.check()
         
     def check(self):
         for side in "X","O":
-            # horizontals
-            for x in range(3):
-                for y in range(3):
+            for row in WINNING_ROWS:
+                for x,y in row:
                     if self.grid[x][y] != side:
-                        break
+                        break;
                 else:
+                    # mark the rows
+                    for x,y in row:
+                        self.grid[x][y] += "*"
                     return side + " won!"
-            # verticals
-            for y in range(3):
-                for x in range(3):
-                    if self.grid[x][y] != side:
-                        break
-                else:
-                    return side + " won!"
-            # diagonal \
-            for x,y in zip(range(3),range(3)):
-                if self.grid[x][y] != side:
-                        break
-            else:
-                return side + " won!"
-            # diagonal /
-            for x,y in zip(range(3),reversed(range(3))):
-                if self.grid[x][y] != side:
-                        break
-            else:
-                return side + " won!"
-       
+                           
         for x in range(3):
             for y in range(3):  
-                 if self.grid[x][y] != " ":
+                 if self.grid[x][y] == " ":
                         return None
+                        
         return "draw!"
         
         

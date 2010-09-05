@@ -22,7 +22,7 @@ td {
     background: white;
     text-align: center;
     vertical-align: center;
-    font-size: 3em;
+    font-size: 3.5em;
 }
 
 p {
@@ -32,11 +32,6 @@ p {
     margin: 0px;
 }
 
-#finished {
-    display: none;
-    color: white;
+.highlight {
     background: #811;
-    padding: .5em;
-    margin: 0px;
-    font-size: 2em;
 }

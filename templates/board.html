@@ -14,26 +14,37 @@ var t;
 var finished = false;
 
 function nextGame() {
-    $("#finished").hide();
+    finished = false;
     $("#id").val(Math.random());
+    $("td").removeClass("highlight");
+    $("td").html(" ");
 }
 
 function ping() {
     c=c+1;
     var t=setTimeout("ping()",1000);
+    getStatus();
+}
+
+function getStatus(){    
     $.getJSON('status.json?id='+$("#id").val(), function(data) {
         if( data.finished ){
-            $('#finished').show();
-            $('#finished').html(data.finished);
+            $('#message').html(data.finished);
             finished = true;
+        } else {
+            $('#message').html(data.message);
         }
-        $('#message').html(data.message);
         var x = 0;
         for(var ridx in data.grid){
             var r = data.grid[ridx];
             var y = 0;
             for(markidx in r){
                 var mark = r[markidx];
+                if (mark.length == 1) {
+                } else if (mark.length == 2) {
+                    mark = mark.substring(0,1);
+                    $(("#"+x)+y).addClass("highlight");
+                }
                 $(("#"+x)+y).html(mark);
                 y ++;
             }
@@ -43,16 +54,13 @@ function ping() {
 }
 
 $(document).ready(function(){
-    $("#finished").click(function(event){
-       nextGame();
-    });
     $("td").click(function(event){
         if(finished) {
             nextGame();
         } else {
             $.getJSON('pick.json?xy='+this.id+'&id='+$("#id").val(), 
                 function(data) {
-                    //$('#message').html(data.picked);
+                    getStatus();
             });
         }
     });
@@ -65,7 +73,6 @@ $(document).ready(function(){
 <body>
     <h1>supreme tic tac toe</h1>
     <input type="hidden" id="id" value="{{id}}">
-    <div id="finished"></div>
     <table>
         <tr><td id="00"></td><td id="01"></td><td id="02"></td></tr>
         <tr><td id="10"></td><td id="11"></td><td id="12"></td></tr>
