@@ -11,6 +11,9 @@ import time
 # its just a temparery thing
 BOARDS = {}
 
+# when to time out players and sessions
+TIME_OUT = 30
+
 # winning rows
 WINNING_ROWS = [
     # vertical
@@ -133,7 +136,7 @@ class StatusHandler(tornado.web.RequestHandler):
         
         # clean up unused boards
         for board in list(BOARDS.values()):
-            if time.time() - board.ping_time > 10:
+            if time.time() - board.ping_time > TIME_OUT:
                 if board.player1id in BOARDS: del BOARDS[board.player1id]
                 if board.player2id in BOARDS: del BOARDS[board.player2id]
                 print "cleard board", board.player1id
@@ -175,10 +178,10 @@ class StatusHandler(tornado.web.RequestHandler):
                     json["message"] = "waiting for X to move!"
                     
             # check for time out
-            if time.time() - board.player1time > 10:
+            if time.time() - board.player1time > TIME_OUT:
                 board.finished = "X player left!"
 
-            if time.time() - board.player2time > 10:
+            if time.time() - board.player2time > TIME_OUT:
                 board.finished = "O player left!"
         else:        
             json["message"] = "waiting for some one to connect... "
