@@ -9,6 +9,15 @@ class MainHandler(tornado.web.RequestHandler):
         BOARD = Template(open('templates/board.html').read())
         self.write(BOARD.render(world="tic tac toe"))
 
+class PickHandler(tornado.web.RequestHandler):
+    
+    def get(self):
+        self.set_header("Content-Type", "text/json")
+        xy = self.get_argument("xy")
+        print xy
+        self.write('{"picked":"%s"}'%xy)
+    
+
 class StyleCSS(tornado.web.RequestHandler):
     
     def get(self):
@@ -18,6 +27,7 @@ class StyleCSS(tornado.web.RequestHandler):
 
 application = tornado.web.Application([
     (r"/", MainHandler),
+    (r"/pick.json", PickHandler),
     (r"/style.css", StyleCSS),
 ])
 
@@ -25,3 +35,4 @@ if __name__ == "__main__":
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(8888)
     tornado.ioloop.IOLoop.instance().start()
+    
