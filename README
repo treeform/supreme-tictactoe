@@ -1,1 +1,27 @@
 Just wanted to write a tic tac toe server using tornado web-server and jinja2 template engine.  I have had some experience with tornado before and only herd about jinja before and looked at the docs.  I think this is a neat opportunity to learn about them both.
+
+
+Idea: two players get to the site.  The site connects them together.  They play a game.  Then a new pair is selected.
+
+
+Control flow:
+
+    player1 visit site
+    site looks if there is any boards that are looking for players
+    if there is not creates a new board
+    player1 with his board waits for a player 
+    player2 gets on the site
+    player2 gets connected to player1's board
+    player1 (being X) makes the first move
+    then player2 (being O)
+    repeat until player1 or player2 wins or all spaces run out
+    close the board, display win, loose or draw message.
+    when player1 and player2 click on the message they start over 
+
+
+Board closes itself when no player has pinged it in 10sec.  Each client pings the server every second for updates.
+
+
+
+
+

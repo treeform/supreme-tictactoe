@@ -8,12 +8,38 @@
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" ></script>
     
 <script type="text/javascript">
+
+var c=0;
+var t;
+
+function ping() {
+    c=c+1;
+    var t=setTimeout("ping()",1000);
+    $.getJSON('status.json?id='+$("#id").val(), function(data) {
+        $('#message').html(data.message);
+        var x = 0;
+        for(var ridx in data.grid){
+            var r = data.grid[ridx];
+            var y = 0;
+            for(markidx in r){
+                var mark = r[markidx];
+                $(("#"+x)+y).html(mark);
+                y ++;
+            }
+            x ++;        
+        }
+        
+    });
+}
+
 $(document).ready(function(){
     $("td").click(function(event){
-        $.getJSON('pick.json?xy='+this.id, function(data) {
-            $('#message').html(data.picked);
+        $.getJSON('pick.json?xy='+this.id+'&id='+$("#id").val(), 
+            function(data) {
+                //$('#message').html(data.picked);
         });
     });
+    ping();
 });
 </script>
     
@@ -21,6 +47,7 @@ $(document).ready(function(){
 
 <body>
     <h1>supreme tic tac toe</h1>
+    <input type="hid_den" id="id" value="{{id}}">
     <table>
         <tr><td id="00"></td><td id="01"></td><td id="02"></td></tr>
         <tr><td id="10"></td><td id="11"></td><td id="12"></td></tr>

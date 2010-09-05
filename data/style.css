@@ -16,6 +16,8 @@ table {
 }
 
 td {
+    width: 33%;
+    height: 33%;
     border: 1px solid #811;
     background: white;
     text-align: center;
