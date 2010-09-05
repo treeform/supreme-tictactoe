@@ -11,17 +11,22 @@
 
 var c=0;
 var t;
+var finished = false;
+
+function nextGame() {
+    $("#finished").hide();
+    $("#id").val(Math.random());
+}
 
 function ping() {
     c=c+1;
     var t=setTimeout("ping()",1000);
     $.getJSON('status.json?id='+$("#id").val(), function(data) {
-    
         if( data.finished ){
             $('#finished').show();
             $('#finished').html(data.finished);
+            finished = true;
         }
-    
         $('#message').html(data.message);
         var x = 0;
         for(var ridx in data.grid){
@@ -34,21 +39,22 @@ function ping() {
             }
             x ++;        
         }
-        
     });
 }
 
 $(document).ready(function(){
-
     $("#finished").click(function(event){
-        $("#finished").hide();
-        $("#id").val(Math.random());
+       nextGame();
     });
     $("td").click(function(event){
-        $.getJSON('pick.json?xy='+this.id+'&id='+$("#id").val(), 
-            function(data) {
-                //$('#message').html(data.picked);
-        });
+        if(finished) {
+            nextGame();
+        } else {
+            $.getJSON('pick.json?xy='+this.id+'&id='+$("#id").val(), 
+                function(data) {
+                    //$('#message').html(data.picked);
+            });
+        }
     });
     ping();
 });
