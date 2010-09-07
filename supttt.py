@@ -1,3 +1,4 @@
+
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -27,6 +28,7 @@ WINNING_ROWS = [
     [(0,0),(1,0),(2,0)],[(0,1),(1,1),(2,1)],[(0,2),(1,2),(2,2)], 
     # diagonal
     [(0,0),(1,1),(2,2)],[(0,2),(1,1),(2,0)]]     
+
 
 
 def read(file):
@@ -78,7 +80,7 @@ class Board:
         # setup next move    
         self.move = (self.move + 1) % 2
         self.finished = self.check()
-        
+        return True
 
     def check(self):
         """
@@ -118,6 +120,7 @@ class PickHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "text/json")
         id = self.get_argument("id")
         if id not in BOARDS: return
+        
         # board found
         board = BOARDS[id]    
         # get the cordinates 
@@ -128,28 +131,44 @@ class PickHandler(tornado.web.RequestHandler):
             mark = "X"
         else: 
             mark = "O"
+            
+        print "picking", id, x,y
+        
         # make the mark    
-        board.mark(x,y,mark)    
+        if board.mark(x,y,mark):
+            if mark == "X": 
+                print "X has moved, sending message to O"
+                board.player2callback()                
+            if mark == "O": 
+                print "O has moved, sending message to X"
+                board.player1callback()
+                
+        print "updaing",mark, "board"                
+        on_response(self, board, id)
 
 class StatusHandler(tornado.web.RequestHandler):
     """
         player pings this thing every 1 second to 
         get state of the board
     """
+    @tornado.web.asynchronous
     def get(self):
         
+        """
         # clean up unused boards
         for board in list(BOARDS.values()):
             if time.time() - board.ping_time > TIME_OUT:
                 if board.player1id in BOARDS: del BOARDS[board.player1id]
                 if board.player2id in BOARDS: del BOARDS[board.player2id]
                 print "cleard board", board.player1id
+        """
                 
         self.set_header("Content-Type", "text/json")
         
-        json = {}
-        
         id = self.get_argument("id")
+        
+        print id, "get status!"
+        
         if id not in BOARDS:
             # board not found look for open board
             for board in BOARDS.itervalues():
@@ -159,43 +178,65 @@ class StatusHandler(tornado.web.RequestHandler):
                     board.player1time = time.time()
                     board.player2time = time.time()
                     print "player",id,"joined",board.player1id
-                    break
+                    print "calling player 1"
+                    board.player1callback()
+                    print "player 2 waits"
+                    board.player2callback = self.async_callback(
+                        on_response, self, board, id)
+                    return
             else:
                 # no open board found lets create new one
-                BOARDS[id] = Board(id)
-                print "created new board",id
-
-          
+                board = Board(id)
+                BOARDS[id] = board
+                print "created new board", id
+                print "player 1 waits"
+                board.player1callback = self.async_callback(
+                    on_response, self, board, id)
+                return
+        
+        
         board = BOARDS[id]
-        board.ping_time = time.time()
+        if id == board.player1id: 
+            print "player 1 asks to wait for 2"
+            board.player1callback = self.async_callback(
+                on_response, self, board, id)
+        else: 
+            print "player 2 asks to wait for 1"
+            board.player2callback = self.async_callback(
+                on_response, self, board, id)
+            
+def on_response(handler, board, id):
+    json = {}
 
-        # get baord messages
-        if board.player2id:
-            if board.move == 0 and board.player1id == id:
-                json["message"] = "X: your move!"
-            elif board.move == 1 and board.player2id == id:
-                json["message"] = "O: your move!"
+    print "on_response", id
+    # get baord messages
+    if board.player2id:
+        if board.move == 0 and board.player1id == id:
+            json["message"] = "X: your move!"
+        elif board.move == 1 and board.player2id == id:
+            json["message"] = "O: your move!"
+        else:
+            if board.player1id == id:
+                json["message"] = "waiting for O to move!"
             else:
-                if board.player1id == id:
-                    json["message"] = "waiting for O to move!"
-                else:
-                    json["message"] = "waiting for X to move!"
-                    
-            # check for time out
-            if time.time() - board.player1time > TIME_OUT:
-                board.finished = "X player left!"
+                json["message"] = "waiting for X to move!"
+                
+        # check for time out
+        if time.time() - board.player1time > TIME_OUT:
+            board.finished = "X player left!"
 
-            if time.time() - board.player2time > TIME_OUT:
-                board.finished = "O player left!"
-        else:        
-            json["message"] = "waiting for some one to connect... "
+        if time.time() - board.player2time > TIME_OUT:
+            board.finished = "O player left!"
+    else:        
+        json["message"] = "waiting for some one to connect... "
 
-        # get information about our board                         
-        json["grid"] = board.grid
-        json["finished"] = board.finished
+    # get information about our board                         
+    json["grid"] = board.grid
+    json["finished"] = board.finished
 
-        self.write(json_encode(json))    
-
+    handler.write(json_encode(json))    
+    handler.finish()
+ 
 application = tornado.web.Application([
     (r"/", MainHandler),
     (r"/pick.json", PickHandler),

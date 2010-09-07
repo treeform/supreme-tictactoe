@@ -16,44 +16,41 @@ var finished = false;
 // finishes this game and starts next game
 function nextGame() {
     finished = false;
-    $("#id").val(Math.random());
+    var r = (""+Math.random()).substring(2,5);
+    $("#id").val(r);
     $("td").removeClass("highlight");
     $("td").html(" ");
 }
 
-// pings the server once a second about state 
-function ping() {
-    c=c+1;
-    var t=setTimeout("ping()",1000);
-    getStatus();
-}
-
 // get status server call
 function getStatus(){    
-    $.getJSON('status.json?id='+$("#id").val(), function(data) {
-        if( data.finished ){
-            $('#message').html(data.finished);
-            finished = true;
-        } else {
-            $('#message').html(data.message);
-        }
-        var x = 0;
-        for(var ridx in data.grid){
-            var r = data.grid[ridx];
-            var y = 0;
-            for(markidx in r){
-                var mark = r[markidx];
-                if (mark.length == 1) {
-                } else if (mark.length == 2) {
-                    mark = mark.substring(0,1);
-                    $(("#"+x)+y).addClass("highlight");
-                }
-                $(("#"+x)+y).html(mark);
-                y ++;
+    $.getJSON('status.json?id='+$("#id").val(), setStatus);
+}
+
+
+function setStatus(data) {
+    if( data.finished ){
+        $('#message').html(data.finished);
+        finished = true;
+    } else {
+        $('#message').html(data.message);
+    }
+    var x = 0;
+    for(var ridx in data.grid){
+        var r = data.grid[ridx];
+        var y = 0;
+        for(markidx in r){
+            var mark = r[markidx];
+            if (mark.length == 1) {
+            } else if (mark.length == 2) {
+                mark = mark.substring(0,1);
+                $(("#"+x)+y).addClass("highlight");
             }
-            x ++;        
+            $(("#"+x)+y).html(mark);
+            y ++;
         }
-    });
+        x ++;        
+    }
 }
 
 // when document loads set everything up
@@ -62,19 +59,18 @@ $(document).ready(function(){
         if(finished) {
             nextGame();
         } else {
-            $.getJSON('pick.json?xy='+this.id+'&id='+$("#id").val(), 
-                function(data) {
-                    // as soon as pick signal returns
-                    // get status so that we see our move quicker
-                    getStatus();
-            });
+            $.getJSON('pick.json?xy='+this.id+'&id='+$("#id").val(), setStatus);
+            getStatus();
         }
     });
-    ping();
+
     $(window).resize(function() {
         fixGrid()
     });
     fixGrid();
+
+    // kick off the blocking ajax call    
+    getStatus();
 });
 
 // this makes the board always square
