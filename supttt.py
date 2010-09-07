@@ -5,6 +5,11 @@ from tornado.escape import json_encode
 from jinja2 import Template
 import random
 import time
+import os
+
+settings = {
+    "static_path": os.path.join(os.path.dirname(__file__),"static")
+}
 
 # this is out in serverlet db                    
 # its ok to keep it here because we never store the boards
@@ -31,7 +36,6 @@ def read(file):
 
 # laod the templates and file we will need        
 BOARD = Template(read('templates/board.html'))
-STYLE = read('data/style.css')
 
 class Board:
     """
@@ -192,21 +196,11 @@ class StatusHandler(tornado.web.RequestHandler):
 
         self.write(json_encode(json))    
 
-class StyleCSS(tornado.web.RequestHandler):
-    """ 
-        gets hardwired css style
-    """
-    def get(self):
-        STYLE = read('data/style.css')
-        self.set_header("Content-Type", "text/css")
-        self.write(STYLE)
-
 application = tornado.web.Application([
     (r"/", MainHandler),
     (r"/pick.json", PickHandler),
     (r"/status.json", StatusHandler),
-    (r"/style.css", StyleCSS),
-])
+], **settings)
 
 if __name__ == "__main__":
     http_server = tornado.httpserver.HTTPServer(application)

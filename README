@@ -10,16 +10,18 @@ Control flow:
     site looks if there is any boards that are looking for players
     if there is not creates a new board
     player1 with his board waits for a player 
+        - player 1 ajax call waits
     player2 gets on the site
-    player2 gets connected to player1's board
+    player2 gets connected to player1's board 
+        - player 1's ajax call returns, player2 ajax waits
     player1 (being X) makes the first move
-    then player2 (being O)
+        - player 2 ajax call returns, player 1 ajax call waits
     repeat until player1 or player2 wins or all spaces run out
     close the board, display win, loose or draw message.
-    when player1 and player2 click on the message they start over 
+    when player1 and player2 click on the win message they start over 
 
 
-Board closes itself when no player has pinged it in 10sec.  Each client pings the server every second for updates.
+Board closes itself after some time.  Clients use blocking ajax calls to comunicate.
 
 
 
